@@ -18,6 +18,8 @@
   var timerSecs   = 0;
   var timerHandle = null;
   var gameOver    = false;
+  var FREE_HINTS    = window.Stars ? window.Stars.FREE_HINTS_PER_SESSION : 2; // free hints per session
+  var paidHintsPool = 0;     // hints granted via Stars purchase
 
   // ── DOM refs ───────────────────────────────────────────────────────────────
 
@@ -76,11 +78,12 @@
     playerGrid = puzzle.grid.map(function (val, i) {
       return isHidden(i) ? null : val;
     });
-    selectedIdx = null;
-    hintsUsed   = 0;
-    hintedCells = [];
-    timerSecs   = 0;
-    gameOver    = false;
+    selectedIdx   = null;
+    hintsUsed     = 0;
+    hintedCells   = [];
+    timerSecs     = 0;
+    gameOver      = false;
+    paidHintsPool = 0;
 
     timerEl.textContent = '0:00';
     resultOverlay.classList.add('hidden');
@@ -98,6 +101,7 @@
 
     renderGrid();
     renderNumpad();
+    updateHintBtn();
     stopTimer();
     startTimer();
   }
@@ -268,9 +272,20 @@
 
   // ── Hint ───────────────────────────────────────────────────────────────────
 
-  hintBtn.addEventListener('click', function () {
-    if (gameOver) return;
+  function updateHintBtn() {
+    if (!hintBtn) return;
+    if (hintsUsed < FREE_HINTS) {
+      hintBtn.textContent = '💡 Hint (free)';
+    } else if (paidHintsPool > 0) {
+      hintBtn.textContent = '💡 Hint (' + paidHintsPool + ' left)';
+    } else if (window.Stars && Stars.isAvailable()) {
+      hintBtn.textContent = '💡 Buy Hints (30 ⭐)';
+    } else {
+      hintBtn.textContent = '💡 Hint';
+    }
+  }
 
+  function useHint() {
     // Find unfilled, non-hinted hidden cells
     var candidates = puzzle.hidden.filter(function (idx) {
       return playerGrid[idx] === null && !isHinted(idx);
@@ -295,6 +310,8 @@
 
     if (window.TG) TG.haptic('medium');
 
+    updateHintBtn();
+
     // Disable hint button if no candidates remain
     var remaining = puzzle.hidden.filter(function (idx) {
       return playerGrid[idx] === null && !isHinted(idx);
@@ -306,6 +323,30 @@
     // Check win (hint might complete the puzzle)
     if (window.isSolved(puzzle, playerGrid)) {
       onSolved();
+    }
+  }
+
+  hintBtn.addEventListener('click', function () {
+    if (gameOver) return;
+
+    if (hintsUsed < FREE_HINTS) {
+      // Free hint
+      useHint();
+    } else if (paidHintsPool > 0) {
+      // Use a paid hint from the pool
+      paidHintsPool--;
+      useHint();
+    } else {
+      // Need to purchase hints
+      if (window.Stars) {
+        Stars.buyHints(3, function (granted) {
+          paidHintsPool += granted;
+          updateHintBtn();
+          // Immediately use one hint from the newly purchased pool
+          paidHintsPool--;
+          useHint();
+        });
+      }
     }
   });
 

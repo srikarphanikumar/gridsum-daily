@@ -1,11 +1,9 @@
 /**
- * stars.js — Telegram Stars payment stub for GridSum Daily (V1)
+ * stars.js — Telegram Stars payment integration for GridSum Daily
  * Vanilla JS, no imports. Exposes window.Stars.
  *
- * V1 NOTE: Telegram Stars payments require a bot backend to create invoices.
- * This module uses confirm() dialogs as placeholders.
- * When the bot backend is ready, replace the confirm() calls with
- * Telegram.WebApp.openInvoice(invoiceLink, callback).
+ * Requires a backend URL injected at runtime via window.GRIDSUM_BACKEND_URL.
+ * Falls back to dev/stub mode (confirm dialogs) when BACKEND_URL is empty.
  *
  * Depends on: telegram.js (window.TG must be loaded first)
  */
@@ -13,63 +11,74 @@
 (function () {
   'use strict';
 
-  /**
-   * Show a Stars purchase confirmation dialog and call onSuccess if accepted.
-   * @param {string}   message   - dialog message shown to user
-   * @param {function} onSuccess - called with no arguments when confirmed
-   */
-  function confirmPurchase(message, onSuccess) {
-    // In V1 we use the browser confirm dialog as a placeholder.
-    // When the bot backend is available, replace this with:
-    //   Telegram.WebApp.openInvoice(invoiceLink, function(status) {
-    //     if (status === 'paid') onSuccess();
-    //   });
-    var confirmed = window.confirm(message);
-    if (confirmed && typeof onSuccess === 'function') {
-      onSuccess();
-    }
-  }
-
-  /**
-   * Purchase hint pack.
-   * V1 stub: shows confirmation dialog, then calls onSuccess immediately.
-   * @param {number}   count     - number of hints (currently fixed at 3 for 30 Stars)
-   * @param {function} onSuccess - called when purchase is confirmed
-   */
-  function buyHints(count, onSuccess) {
-    var starCost = 30;
-    var hintCount = count || 3;
-    confirmPurchase(
-      'Spend ' + starCost + ' Stars for ' + hintCount + ' hints?',
-      onSuccess
-    );
-  }
-
-  /**
-   * Purchase streak restore.
-   * V1 stub: shows confirmation dialog, then calls onSuccess immediately.
-   * @param {function} onSuccess - called when purchase is confirmed
-   */
-  function buyStreakRestore(onSuccess) {
-    confirmPurchase(
-      'Spend 50 Stars to restore streak?',
-      onSuccess
-    );
-  }
-
-  /**
-   * Returns true if Stars purchases are available (i.e. running inside Telegram).
-   */
-  function isAvailable() {
-    return window.TG ? window.TG.isAvailable() : false;
-  }
-
-  // ── Public API ─────────────────────────────────────────────────────────────
+  var BACKEND_URL = window.GRIDSUM_BACKEND_URL || '';
 
   window.Stars = {
-    buyHints:          buyHints,
-    buyStreakRestore:  buyStreakRestore,
-    isAvailable:       isAvailable,
+    FREE_HINTS_PER_SESSION: 2,
+
+    isAvailable: function () {
+      return window.TG && TG.isAvailable() && BACKEND_URL !== '';
+    },
+
+    // Fetch an invoice link from backend, open it via Telegram WebApp
+    // onSuccess(hintsGranted) called if payment succeeds
+    buyHints: function (count, onSuccess) {
+      var product = count <= 3 ? 'hints_3' : 'hints_5';
+      var hintsGranted = count <= 3 ? 3 : 5;
+
+      if (!BACKEND_URL) {
+        // No backend configured — grant freely (dev/stub mode)
+        if (confirm('💡 Buy ' + hintsGranted + ' hints? (Dev mode: free)')) {
+          onSuccess(hintsGranted);
+        }
+        return;
+      }
+
+      fetch(BACKEND_URL + '/api/create-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product: product })
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var link = data.link;
+        var error = data.error;
+        if (error || !link) throw new Error(error || 'No link returned');
+        Telegram.WebApp.openInvoice(link, function (status) {
+          if (status === 'paid') onSuccess(hintsGranted);
+        });
+      })
+      .catch(function (err) {
+        console.error('Stars.buyHints failed:', err);
+        alert('Payment unavailable. Please try again.');
+      });
+    },
+
+    buyStreakRestore: function (onSuccess) {
+      if (!BACKEND_URL) {
+        if (confirm('🔥 Restore streak? (Dev mode: free)')) onSuccess();
+        return;
+      }
+
+      fetch(BACKEND_URL + '/api/create-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product: 'streak_restore' })
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var link = data.link;
+        var error = data.error;
+        if (error || !link) throw new Error(error || 'No link');
+        Telegram.WebApp.openInvoice(link, function (status) {
+          if (status === 'paid') onSuccess();
+        });
+      })
+      .catch(function (err) {
+        console.error('Stars.buyStreakRestore failed:', err);
+        alert('Payment unavailable. Please try again.');
+      });
+    }
   };
 
 }());
