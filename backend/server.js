@@ -37,6 +37,23 @@ const PRODUCTS = {
 
 const bot = new Bot(BOT_TOKEN);
 
+const MINI_APP_URL = 'https://gridsum-daily.vercel.app';
+
+// /start — welcome message with Play button
+bot.command('start', async (ctx) => {
+  await ctx.reply(
+    '🔢 *GridSum Daily*\n\nA new number puzzle every day\\. Fill the grid, share your result\\.\n\n👇 Tap Play to start today\'s puzzle\\!',
+    {
+      parse_mode: 'MarkdownV2',
+      reply_markup: {
+        inline_keyboard: [[
+          { text: '🎮 Play GridSum', web_app: { url: MINI_APP_URL } }
+        ]]
+      }
+    }
+  );
+});
+
 // Must answer pre_checkout_query within 10 seconds — always approve.
 bot.on('pre_checkout_query', async (ctx) => {
   try {
