@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f0f0f" />
+  <title>GridSum Daily</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- Header -->
+    <header id="header">
+      <div id="title">GridSum</div>
+      <div id="streak-display">
+        <span id="streak-icon">🔥</span>
+        <span id="streak-count">0</span>
+      </div>
+    </header>
+
+    <!-- Timer -->
+    <div id="timer-display">0:00</div>
+
+    <!-- Difficulty label -->
+    <div id="difficulty-label"></div>
+
+    <!-- Grid wrapper: 4 cells + 1 sum column, 4 rows + 1 sum row -->
+    <div id="grid-wrapper">
+      <div id="grid"></div>
+    </div>
+
+    <!-- Number pad -->
+    <div id="numpad">
+      <button class="num-btn" data-num="1">1</button>
+      <button class="num-btn" data-num="2">2</button>
+      <button class="num-btn" data-num="3">3</button>
+      <button class="num-btn" data-num="4">4</button>
+      <button class="num-btn" data-num="5">5</button>
+      <button class="num-btn" data-num="6">6</button>
+      <button class="num-btn" data-num="7">7</button>
+      <button class="num-btn" data-num="8">8</button>
+      <button class="num-btn" data-num="9">9</button>
+      <button class="num-btn erase-btn" data-num="erase">⌫</button>
+    </div>
+
+    <!-- Hint button -->
+    <button id="hint-btn">💡 Hint</button>
+
+    <!-- Result overlay (hidden by default) -->
+    <div id="result-overlay" class="hidden">
+      <div id="result-card">
+        <div id="result-emoji"></div>
+        <div id="result-title"></div>
+        <div id="result-stats"></div>
+        <div id="share-text-preview"></div>
+        <button id="share-btn">Share Result</button>
+        <button id="play-again-btn">Play Again</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="js/validator.js" defer></script>
+  <script src="js/storage.js" defer></script>
+  <script src="js/telegram.js" defer></script>
+  <script src="js/puzzles.js" defer></script>
+  <script src="js/game.js" defer></script>
+</body>
+</html>

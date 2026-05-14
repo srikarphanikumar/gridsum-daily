@@ -1,0 +1,391 @@
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:          #0f0f0f;
+  --surface:     #1e1e1e;
+  --border:      #2e2e2e;
+  --text:        #f5f5f5;
+  --text-muted:  #888;
+  --blue:        #3b82f6;
+  --green:       #22c55e;
+  --red:         #ef4444;
+  --yellow:      #eab308;
+  --sum-bg:      #141414;
+  --font:        system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --cell-size:   clamp(60px, 18vw, 80px);
+  --sum-size:    clamp(36px, 10vw, 48px);
+  --gap:         3px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100dvh;
+  padding: 12px 16px 24px;
+  gap: 12px;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+#header {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
+
+#streak-display {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+#streak-display span { line-height: 1; }
+
+/* ── Timer ────────────────────────────────────────────────── */
+#timer-display {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+
+/* ── Difficulty ───────────────────────────────────────────── */
+#difficulty-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  height: 14px;
+}
+
+/* ── Grid wrapper ─────────────────────────────────────────── */
+#grid-wrapper {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  justify-content: center;
+}
+
+/* 5-column, 5-row grid: 4 cells + 1 sum col, 4 rows + 1 sum row */
+#grid {
+  display: grid;
+  grid-template-columns: repeat(4, var(--cell-size)) var(--sum-size);
+  grid-template-rows: repeat(4, var(--cell-size)) var(--sum-size);
+  gap: var(--gap);
+}
+
+/* ── Individual cells ─────────────────────────────────────── */
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: default;
+  border: 2px solid transparent;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+/* Given (revealed) cells */
+.cell.given {
+  background: var(--surface);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+/* Hidden (player-input) cells */
+.cell.hidden-cell {
+  background: #282828;
+  color: var(--text);
+  border-color: #444;
+  cursor: pointer;
+}
+
+.cell.hidden-cell:empty::after {
+  content: '';
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #444;
+}
+
+/* States */
+.cell.selected {
+  border-color: var(--blue);
+  background: #1a2f52;
+  color: var(--text);
+}
+
+.cell.correct {
+  border-color: var(--green);
+  background: #0d2b1a;
+  color: var(--green);
+}
+
+.cell.wrong {
+  border-color: var(--red);
+  background: #2b0d0d;
+  color: var(--red);
+}
+
+/* Selected + filled: keep blue border, show result color on text */
+.cell.selected.correct {
+  border-color: var(--blue);
+  background: #1a2f52;
+  color: var(--green);
+}
+
+.cell.selected.wrong {
+  border-color: var(--blue);
+  background: #1a2f52;
+  color: var(--red);
+}
+
+.cell.hinted {
+  border-color: var(--yellow);
+  background: #2b2000;
+  color: var(--yellow);
+  cursor: default;
+}
+
+/* Row / column sum labels */
+.sum-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sum-bg);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/* Corner cell (bottom-right): empty */
+.sum-corner {
+  background: transparent;
+  border: none;
+}
+
+/* ── Number pad ───────────────────────────────────────────── */
+#numpad {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.num-btn {
+  min-height: 52px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  background: var(--surface);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.1s, transform 0.07s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Digits 1-9 fill first 9 slots; erase button spans the last slot in row 2 */
+.num-btn:nth-child(1) { grid-column: 1; grid-row: 1; }
+.num-btn:nth-child(2) { grid-column: 2; grid-row: 1; }
+.num-btn:nth-child(3) { grid-column: 3; grid-row: 1; }
+.num-btn:nth-child(4) { grid-column: 4; grid-row: 1; }
+.num-btn:nth-child(5) { grid-column: 5; grid-row: 1; }
+.num-btn:nth-child(6) { grid-column: 1; grid-row: 2; }
+.num-btn:nth-child(7) { grid-column: 2; grid-row: 2; }
+.num-btn:nth-child(8) { grid-column: 3; grid-row: 2; }
+.num-btn:nth-child(9) { grid-column: 4; grid-row: 2; }
+.num-btn:nth-child(10) { grid-column: 5; grid-row: 2; }
+
+.num-btn:active {
+  background: #333;
+  transform: scale(0.93);
+}
+
+.num-btn.erase-btn {
+  color: var(--text-muted);
+  font-size: 1.2rem;
+}
+
+.num-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Hint button ──────────────────────────────────────────── */
+#hint-btn {
+  min-height: 44px;
+  padding: 0 28px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--yellow);
+  border: 1.5px solid var(--yellow);
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: var(--font);
+  letter-spacing: 0.3px;
+  transition: background 0.12s, color 0.12s;
+}
+
+#hint-btn:active {
+  background: #2b2000;
+}
+
+#hint-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Result overlay ───────────────────────────────────────── */
+#result-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 24px;
+}
+
+#result-overlay.hidden {
+  display: none;
+}
+
+#result-card {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 16px;
+  padding: 32px 28px 28px;
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+#result-emoji {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+#result-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+#result-stats {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 2;
+  text-align: center;
+}
+
+#share-text-preview {
+  width: 100%;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", var(--font);
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  line-height: 1.8;
+  text-align: left;
+  overflow-x: auto;
+  letter-spacing: 0.05em;
+}
+
+#share-btn,
+#play-again-btn {
+  width: 100%;
+  min-height: 48px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: opacity 0.1s;
+}
+
+#share-btn {
+  background: var(--blue);
+  color: #fff;
+}
+
+#play-again-btn {
+  background: var(--surface);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+}
+
+#share-btn:active,
+#play-again-btn:active {
+  opacity: 0.8;
+}
+
+/* ── Copy toast ───────────────────────────────────────────── */
+#copy-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #222;
+  color: var(--text);
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 200;
+}
+
+#copy-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
