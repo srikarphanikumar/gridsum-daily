@@ -252,14 +252,14 @@ test('getTotalSolved: fresh → 0', () => {
 
 test('recordSolve: today → total becomes 1', () => {
   localStorage.clear();
-  const today = new Date().toISOString().slice(0,10);
+  const _d = new Date(); const today = _d.getFullYear() + '-' + String(_d.getMonth()+1).padStart(2,'0') + '-' + String(_d.getDate()).padStart(2,'0');
   GameStorage.recordSolve(today, 90, 1);
   assertEqual(GameStorage.getTotalSolved(), 1);
 });
 
 test('recordSolve: same day twice → still 1 total', () => {
   localStorage.clear();
-  const today = new Date().toISOString().slice(0,10);
+  const _d = new Date(); const today = _d.getFullYear() + '-' + String(_d.getMonth()+1).padStart(2,'0') + '-' + String(_d.getDate()).padStart(2,'0');
   GameStorage.recordSolve(today, 90, 1);
   GameStorage.recordSolve(today, 60, 0);
   assertEqual(GameStorage.getTotalSolved(), 1);
@@ -267,21 +267,21 @@ test('recordSolve: same day twice → still 1 total', () => {
 
 test('recordSolve: today → streak.current === 1', () => {
   localStorage.clear();
-  const today = new Date().toISOString().slice(0,10);
+  const _d = new Date(); const today = _d.getFullYear() + '-' + String(_d.getMonth()+1).padStart(2,'0') + '-' + String(_d.getDate()).padStart(2,'0');
   GameStorage.recordSolve(today, 90, 0);
   assertEqual(GameStorage.getStreak().current, 1);
 });
 
 test('recordSolve: today → streak.best === 1', () => {
   localStorage.clear();
-  const today = new Date().toISOString().slice(0,10);
+  const _d = new Date(); const today = _d.getFullYear() + '-' + String(_d.getMonth()+1).padStart(2,'0') + '-' + String(_d.getDate()).padStart(2,'0');
   GameStorage.recordSolve(today, 90, 0);
   assertEqual(GameStorage.getStreak().best, 1);
 });
 
 test('getTodaySolve: after solve → correct data', () => {
   localStorage.clear();
-  const today = new Date().toISOString().slice(0,10);
+  const _d = new Date(); const today = _d.getFullYear() + '-' + String(_d.getMonth()+1).padStart(2,'0') + '-' + String(_d.getDate()).padStart(2,'0');
   GameStorage.recordSolve(today, 120, 2);
   const s = GameStorage.getTodaySolve();
   assert(s !== null, 'should not be null');
@@ -327,7 +327,7 @@ test('updateBestTime: three difficulties stored independently', () => {
 
 test('recordSolve: hintsUsed defaults to 0 when undefined', () => {
   localStorage.clear();
-  const today = new Date().toISOString().slice(0,10);
+  const _d = new Date(); const today = _d.getFullYear() + '-' + String(_d.getMonth()+1).padStart(2,'0') + '-' + String(_d.getDate()).padStart(2,'0');
   GameStorage.recordSolve(today, 60, undefined);
   const s = GameStorage.getTodaySolve();
   assertEqual(s.hintsUsed, 0);

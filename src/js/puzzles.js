@@ -78,6 +78,7 @@
 
   /** Initialise from a resolved puzzles array */
   function initFromPuzzles(puzzles) {
+    window.PUZZLE_BANK = puzzles;
     window.PUZZLE = selectPuzzle(puzzles);
     dispatchReady();
   }
@@ -91,6 +92,40 @@
     }
     return puzzles[((n % puzzles.length) + puzzles.length) % puzzles.length];
   };
+
+  /**
+   * Public: get a puzzle for the given mode and sessionIndex.
+   * mode = 'daily' | 'easy' | 'medium' | 'hard'
+   * sessionIndex = 0-based integer, defaults to 0
+   */
+  window.getPuzzleForMode = function (mode, sessionIndex) {
+    var idx = (typeof sessionIndex === 'number') ? sessionIndex : 0;
+    var bank = window.PUZZLE_BANK;
+    if (!bank || bank.length === 0) {
+      // Try reading from cache as fallback
+      bank = readFromCache();
+      if (!bank || bank.length === 0) return null;
+    }
+
+    if (mode === 'daily') {
+      return selectPuzzle(bank);
+    }
+
+    // Filter by difficulty
+    var filtered = bank.filter(function (p) {
+      return p.difficulty === mode;
+    });
+
+    if (filtered.length === 0) {
+      // No puzzles of that difficulty — fall back to full bank
+      filtered = bank;
+    }
+
+    return filtered[((idx % filtered.length) + filtered.length) % filtered.length];
+  };
+
+  // Expose empty bank array immediately so callers can check readiness
+  window.PUZZLE_BANK = [];
 
   /** Fetch puzzles.json, fall back to cache on failure */
   function loadPuzzles() {

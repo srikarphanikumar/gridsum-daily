@@ -47,6 +47,36 @@
     <!-- Hint button -->
     <button id="hint-btn">💡 Hint</button>
 
+    <!-- Mode selector overlay (shown on load) -->
+    <div id="mode-selector">
+      <div id="mode-card">
+        <div id="mode-title">GridSum Daily</div>
+        <div id="mode-subtitle">Choose your puzzle</div>
+        <div id="mode-buttons">
+          <button class="mode-btn mode-daily" data-mode="daily">
+            <span class="mode-btn-icon">📅</span>
+            <span class="mode-btn-label">Daily</span>
+            <span class="mode-btn-sub">Today's puzzle</span>
+          </button>
+          <button class="mode-btn" data-mode="easy">
+            <span class="mode-btn-icon">🟢</span>
+            <span class="mode-btn-label">Easy</span>
+            <span class="mode-btn-sub">4 hidden cells</span>
+          </button>
+          <button class="mode-btn" data-mode="medium">
+            <span class="mode-btn-icon">🟡</span>
+            <span class="mode-btn-label">Medium</span>
+            <span class="mode-btn-sub">6 hidden cells</span>
+          </button>
+          <button class="mode-btn" data-mode="hard">
+            <span class="mode-btn-icon">🔴</span>
+            <span class="mode-btn-label">Hard</span>
+            <span class="mode-btn-sub">9 hidden cells</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Result overlay (hidden by default) -->
     <div id="result-overlay" class="hidden">
       <div id="result-card">
@@ -56,6 +86,14 @@
         <div id="share-text-preview"></div>
         <button id="share-btn">Share Result</button>
         <button id="play-again-btn">Play Again</button>
+        <div id="practice-buttons" class="hidden">
+          <div id="practice-label">Play practice instead:</div>
+          <div id="practice-mode-btns">
+            <button class="practice-mode-btn" data-mode="easy">Easy</button>
+            <button class="practice-mode-btn" data-mode="medium">Medium</button>
+            <button class="practice-mode-btn" data-mode="hard">Hard</button>
+          </div>
+        </div>
       </div>
     </div>
 

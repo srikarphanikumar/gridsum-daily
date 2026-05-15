@@ -21,20 +21,25 @@
   var FREE_HINTS    = window.Stars ? window.Stars.FREE_HINTS_PER_SESSION : 2; // free hints per session
   var paidHintsPool = 0;     // hints granted via Stars purchase
 
+  var currentMode  = 'daily';  // 'daily' | 'easy' | 'medium' | 'hard'
+  var sessionIndex = 0;        // increments each Play Again in practice mode
+
   // ── DOM refs ───────────────────────────────────────────────────────────────
 
-  var gridEl        = document.getElementById('grid');
-  var timerEl       = document.getElementById('timer-display');
-  var hintBtn       = document.getElementById('hint-btn');
-  var resultOverlay = document.getElementById('result-overlay');
-  var resultEmoji   = document.getElementById('result-emoji');
-  var resultTitle   = document.getElementById('result-title');
-  var resultStats   = document.getElementById('result-stats');
-  var sharePreview  = document.getElementById('share-text-preview');
-  var shareBtn      = document.getElementById('share-btn');
-  var playAgainBtn  = document.getElementById('play-again-btn');
-  var streakCount   = document.getElementById('streak-count');
-  var diffLabel     = document.getElementById('difficulty-label');
+  var gridEl           = document.getElementById('grid');
+  var timerEl          = document.getElementById('timer-display');
+  var hintBtn          = document.getElementById('hint-btn');
+  var resultOverlay    = document.getElementById('result-overlay');
+  var resultEmoji      = document.getElementById('result-emoji');
+  var resultTitle      = document.getElementById('result-title');
+  var resultStats      = document.getElementById('result-stats');
+  var sharePreview     = document.getElementById('share-text-preview');
+  var shareBtn         = document.getElementById('share-btn');
+  var playAgainBtn     = document.getElementById('play-again-btn');
+  var streakCount      = document.getElementById('streak-count');
+  var diffLabel        = document.getElementById('difficulty-label');
+  var modeSelectorEl   = document.getElementById('mode-selector');
+  var practiceButtonsEl = document.getElementById('practice-buttons');
 
   // ── Utilities ──────────────────────────────────────────────────────────────
 
@@ -437,10 +442,24 @@
       }
     };
 
+    // Reset result card to default state (hide practice options, show play-again)
+    practiceButtonsEl.classList.add('hidden');
+    playAgainBtn.classList.remove('hidden');
+
     playAgainBtn.onclick = function () {
-      resultOverlay.classList.add('hidden');
-      // Reload page to get next puzzle (or same one in dev)
-      window.location.reload();
+      if (currentMode === 'daily') {
+        // Keep overlay open, swap play-again for practice options
+        playAgainBtn.classList.add('hidden');
+        practiceButtonsEl.classList.remove('hidden');
+      } else {
+        // Practice: load next puzzle of same difficulty
+        resultOverlay.classList.add('hidden');
+        sessionIndex++;
+        var nextPuzzle = window.getPuzzleForMode(currentMode, sessionIndex);
+        if (nextPuzzle) {
+          initGame(nextPuzzle);
+        }
+      }
     };
 
     resultOverlay.classList.remove('hidden');
@@ -495,21 +514,60 @@
     gridEl.innerHTML = '<div style="grid-column:1/-1;grid-row:1/-1;display:flex;align-items:center;justify-content:center;color:#888;font-size:0.9rem;text-align:center;padding:20px;">' + msg + '</div>';
   }
 
+  // ── Mode selector ──────────────────────────────────────────────────────────
+
+  function showModeSelector() {
+    modeSelectorEl.classList.remove('hidden');
+  }
+
+  function hideModeSelector() {
+    modeSelectorEl.classList.add('hidden');
+  }
+
+  function startMode(mode) {
+    currentMode = mode;
+    hideModeSelector();
+
+    var p = window.getPuzzleForMode(mode, sessionIndex);
+    if (p) {
+      initGame(p);
+    } else {
+      // Puzzle bank not ready yet — wait for puzzleReady then start
+      document.addEventListener('puzzleReady', function handler() {
+        document.removeEventListener('puzzleReady', handler);
+        var ready = window.getPuzzleForMode(mode, sessionIndex);
+        if (ready) {
+          initGame(ready);
+        } else {
+          showError('Could not load puzzle. Please refresh.');
+        }
+      });
+    }
+  }
+
+  // Wire mode selector buttons
+  var modeButtons = document.querySelectorAll('.mode-btn');
+  modeButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var mode = btn.dataset.mode;
+      startMode(mode);
+    });
+  });
+
+  // Wire practice mode buttons inside the result overlay
+  var practiceModeButtons = document.querySelectorAll('.practice-mode-btn');
+  practiceModeButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var mode = btn.dataset.mode;
+      resultOverlay.classList.add('hidden');
+      sessionIndex = 0;
+      startMode(mode);
+    });
+  });
+
   // ── Bootstrap ──────────────────────────────────────────────────────────────
 
-  function onPuzzleReady() {
-    if (!window.PUZZLE) {
-      showError('Could not load puzzle. Please refresh.');
-      return;
-    }
-    initGame(window.PUZZLE);
-  }
-
-  document.addEventListener('puzzleReady', onPuzzleReady);
-
-  // If puzzleReady already fired before this script ran (edge case with non-defer)
-  if (window.PUZZLE) {
-    onPuzzleReady();
-  }
+  // Show mode selector immediately on load; puzzle bank loads in background.
+  showModeSelector();
 
 }());
